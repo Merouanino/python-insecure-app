@@ -1,9 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.13-slim-trixie@sha256:b04b5d7233d2ad9c379e22ea8927cd1378cd15c60d4ef876c065b25ea8fb3bf3 AS debian
+FROM python:3.13-slim-trixie@sha256:7c61056e61ac89e852de05f3dc6fa51a6dd2181797bceed46aa725dd7cb2cd3b AS debian
 
 LABEL project="Python Insecure App" service="FastAPI" stage="debian"
-# RUN python3 -m pip install --upgrade pip~=26.2
 ENV NONROOT=nonroot \
 	LANG=C.UTF-8 \
 	LC_ALL=C.UTF-8 \
