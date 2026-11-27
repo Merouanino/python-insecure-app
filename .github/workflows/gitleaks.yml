@@ -37,7 +37,18 @@ jobs:
           if [ ! -f gitleaks-report.json ] || [ ! -s gitleaks-report.json ]; then
             echo "[]" > gitleaks-report.json
           fi
-
+          
+      - name: Evaluate threshold
+        run: |
+          COUNT=$(jq 'length' gitleaks-report.json)
+          echo "## Gitleaks : ${COUNT} secret(s) dans l'historique" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$COUNT" -gt 0 ]; then
+            jq -r '.[] | "- \(.RuleID) — \(.File):\(.StartLine) (commit \(.Commit[0:7]))"' gitleaks-report.json >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::${COUNT} secret(s) détecté(s) dans l'historique Git"
+            exit 1
+          fi
+          echo "Aucun secret détecté."
+          
       - name: Upload Gitleaks report artifact
         if: always()
         uses: actions/upload-artifact@v4
