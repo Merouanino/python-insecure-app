@@ -234,3 +234,5 @@ just precommit
 ```shell
 just precommit_update
 ```
+
+<!-- TP partie 3 -->
