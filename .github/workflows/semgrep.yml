@@ -1,0 +1,47 @@
+name: DevSecOps - Semgrep SAST Scan
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # publication du SARIF dans Security > Code scanning
+
+jobs:
+  semgrep-sast:
+    name: Semgrep SAST Quality Gate
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest # à figer après le premier run (version affichée dans le log)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # nécessaire pour --baseline-commit
+
+      - name: Full scan (inventaire, non bloquant)
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          semgrep --version
+          semgrep scan --config p/default --config p/owasp-top-ten \
+            --sarif --output semgrep-results.sarif
+
+      - name: Quality gate (findings introduits par la PR)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          semgrep scan --config p/default --config p/owasp-top-ten \
+            --baseline-commit "$BASE_SHA" --error
+
+      - name: Upload SARIF to Code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
